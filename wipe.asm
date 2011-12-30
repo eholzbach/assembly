@@ -6,6 +6,7 @@ section .data
 fsize dd 0
 asize dd 0
 fname dd 0
+count db 0
 
 section .bss
 
@@ -54,7 +55,9 @@ _start:
         push    eax
         int     0x80
         jc      .fail
-        jmp     .overwrite
+        mov     dword [count],0 ; zero our counter
+        call    .filledz
+        jmp     .loopy
 
 .fail:
         push    dword 5
@@ -63,8 +66,7 @@ _start:
         mov     eax,4           ; write
         push    eax
         int     0x80
-
-        mov     eax,1
+        mov     eax,1           ; exit
         push    eax
         int     0x80
 
@@ -78,18 +80,6 @@ _start:
         mov     eax,1           ; exit
         push    eax
         int     0x80
-
-.overwrite:
-        call    .filledz        ; fill buffer with 0x00 
-        call    .loopy          ; overwrite the file
-        mov     ecx,[asize]
-        mov     [fsize],ecx
-        call    .filledo        ; fill buffer with 0xff
-        call    .loopy          ; overwrite the file
-        mov     ecx,[asize]
-        mov     [fsize],ecx
-        call    .filledz        ; fill buffer with 0x00
-        call    .loopy          ; overwrite the file
 
 .endloop:
         push    ebp
@@ -105,13 +95,14 @@ _start:
 
         mov     eax,1           ; exit
         push    eax
-        int     0x80        
+        int     0x80
+
 .loopy:
         push    dword 5
         push    dword 8192
         push    dword buffer
         push    ebp
-        mov     eax,4
+        mov     eax,4           ; write
         push    eax
         int     0x80
         test    eax,eax         ; test for eax -1 instead of carry
@@ -124,14 +115,34 @@ _start:
         test    eax,eax
         js      .fail
 
-        mov     ecx,[fsize]     ; subtract what we wrote from the
-        sub     ecx,8192        ; original filesize   
+        push    dword 0         ; move to sof
+        push    dword 0
+        push    dword 0
+        push    ebp
+        mov     eax,478         ; lseek
+        push    eax
+        int     0x80
+
+        mov     ecx,[fsize]     ; subtract what we wrote from the org fsize
+        sub     ecx,8192  
         test    ecx,ecx
-        js     .endloop
+        js      .endpass
 
         mov     [fsize],ecx
         jmp     .loopy
 
+.endpass:
+        inc     dword [count]
+        cmp     dword [count],1
+        je      .filledo
+        cmp     dword [count],2
+        je      .passtwo
+        cmp     dword [count],3
+        je      .endloop
+        jmp     .loopy
+.passtwo:
+        call    .filledz
+        jmp     .loopy
 .filledz:             
         mov     ecx,buffersize                                                             
         mov     esi,buffer                                                                          
@@ -152,7 +163,7 @@ _start:
         mov     al,0xff
         stosb                   ; fill buffer with 0xff
         loop    .ones
-        ret
+        jmp     .loopy
 
 logo db 'usage: wipe filename', 0x0a
 logo2 db 'fail', 0x0a
