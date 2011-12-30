@@ -6,7 +6,6 @@ section .data
 fsize dd 0
 asize dd 0
 fname dd 0
-ddat db 0
 
 section .bss
 
