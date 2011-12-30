@@ -81,22 +81,6 @@ _start:
         push    eax
         int     0x80
 
-.endloop:
-        push    ebp
-        mov     eax,6           ; close
-        push    eax
-        int     0x80
-
-        mov     eax,[fname]
-        push    eax
-        mov     eax,10          ; unlink
-        push    eax
-        int     0x80
-
-        mov     eax,1           ; exit
-        push    eax
-        int     0x80
-
 .loopy:
         push    dword 5
         push    dword 8192
@@ -140,6 +124,7 @@ _start:
         cmp     dword [count],3
         je      .endloop
         jmp     .loopy
+
 .passtwo:
         call    .filledz
         jmp     .loopy
@@ -164,6 +149,23 @@ _start:
         stosb                   ; fill buffer with 0xff
         loop    .ones
         jmp     .loopy
+
+.endloop:
+        push    ebp
+        mov     eax,6           ; close
+        push    eax
+        int     0x80
+
+        mov     eax,[fname]
+        push    eax
+        mov     eax,10          ; unlink
+        push    eax
+        int     0x80
+
+        mov     eax,1           ; exit
+        push    eax
+        int     0x80
+
 
 logo db 'usage: wipe filename', 0x0a
 logo2 db 'fail', 0x0a
