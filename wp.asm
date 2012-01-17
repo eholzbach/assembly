@@ -3,7 +3,7 @@
 ; nasm -f elf wp.asm
 ; ld -m elf_i386 -s -o wp wp.o
 
-; need to write support for multiple files and directories 
+; need to write support for multiple files and directories, fix logic
 
 section .data
  fsize     dd 0
